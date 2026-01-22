@@ -26,7 +26,9 @@ namespace Multi_Ttt_Client
 
         // 서버 통신 관련 변수
         private SocketIOClient.SocketIO socket;
-        private int myPlayerNumber = 0; // 서버에서 할당받는 플레이어 번호
+        private int myPlayerNumber = 0; // 내가 1번인지 2번인지
+        private int nextDieP1 = -1;    // 서버가 알려준 1번의 사라질 돌 위치
+        private int nextDieP2 = -1;    // 서버가 알려준 2번의 사라질 돌 위치
 
         public Form1()
         {
@@ -122,18 +124,22 @@ namespace Multi_Ttt_Client
             // 서버의 게임 상태를 클라이언트에 동기화
             socket.On("update_game", response => {
                 var data = response.GetValue<JsonElement>();
-                int[] serverBoard = data.GetProperty("board").EnumerateArray().Select(x => x.GetInt32()).ToArray();
-                int serverTurn = data.GetProperty("turn").GetInt32();
+                
+                // 1. 기존 보드와 턴 정보 업데이트
+                this.board = data.GetProperty("board").EnumerateArray().Select(x => x.GetInt32()).ToArray();
+                this.currentPlayer = data.GetProperty("turn").GetInt32();
                 int winner = data.GetProperty("winner").GetInt32();
 
+                // 2. [추가] 서버가 알려준 "사라질 돌" 정보 읽기
+                var nextToDie = data.GetProperty("nextToDie");
+                this.nextDieP1 = nextToDie.GetProperty("1").GetInt32();
+                this.nextDieP2 = nextToDie.GetProperty("2").GetInt32();
+
                 this.Invoke((MethodInvoker)delegate {
-                    this.board = serverBoard;
-                    this.currentPlayer = serverTurn;
-                    RefreshBoard();
+                    RefreshBoard(); // 이제 아래에서 이 변수들을 써서 주황색을 칠합니다.
                     
                     if (winner != 0) {
                         MessageBox.Show($"플레이어 {winner} 승리!");
-                        ResetGameData();
                         ShowMenu();
                     }
                 });
@@ -275,21 +281,23 @@ namespace Multi_Ttt_Client
         {
             for (int i = 0; i < 9; i++)
             {
-                if (board[i] == 0)
-                {
+                // 숫자 혹은 O, X 표시와 기본 색상 (기존과 동일)
+                if (board[i] == 0) {
                     btnBoard[i].Text = (i + 1).ToString();
                     btnBoard[i].BackColor = Color.White;
-                    btnBoard[i].ForeColor = Color.LightGray;
-                }
-                else
-                {
+                } else {
                     btnBoard[i].Text = (board[i] == 1) ? "O" : "X";
-                    btnBoard[i].ForeColor = Color.White;
                     btnBoard[i].BackColor = (board[i] == 1) ? Color.DodgerBlue : Color.Crimson;
                 }
 
-                // 다음에 사라질 돌 주황색 예고 (로컬/AI 모드에서만 작동)
-                if (currentMode != GameMode.ServerMulti)
+                // [수정] 서버 멀티플레이 시 주황색 예고 로직
+                if (currentMode == GameMode.ServerMulti)
+                {
+                    // 현재 턴인 사람의 돌 중 사라질 돌을 주황색으로 표시
+                    if (currentPlayer == 1 && i == nextDieP1) btnBoard[i].BackColor = Color.Orange;
+                    if (currentPlayer == 2 && i == nextDieP2) btnBoard[i].BackColor = Color.Orange;
+                }
+                else // 로컬 모드일 때 (기존 로직)
                 {
                     if (currentPlayer == 1 && historyP1.Count == 3 && i == historyP1.Peek()) btnBoard[i].BackColor = Color.Orange;
                     if (currentPlayer == 2 && historyP2.Count == 3 && i == historyP2.Peek()) btnBoard[i].BackColor = Color.Orange;
