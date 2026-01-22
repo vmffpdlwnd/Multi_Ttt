@@ -46,7 +46,7 @@ namespace Multi_Ttt_Client
 
             Label lblTitle = new Label 
             { 
-                Text = "무한 틱택토", 
+                Text = "멀티 틱택토", 
                 Font = new Font("맑은 고딕", 20, FontStyle.Bold), 
                 Dock = DockStyle.Top, 
                 Height = 80, 
