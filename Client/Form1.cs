@@ -139,6 +139,23 @@ namespace Multi_Ttt_Client
                 });
             });
 
+            // 서버가 "게임 시작"이라고 말할 때 호출됨
+            socket.On("game_start", response => {
+                this.Invoke((MethodInvoker)delegate {
+                    MessageBox.Show("상대방이 입장했습니다! 게임을 시작합니다.");
+                    this.Text = "틱택토 - 게임 진행 중";
+                });
+            });
+
+            // 상대방이 나갔을 때 처리
+            socket.On("player_disconnected", response => {
+                this.Invoke((MethodInvoker)delegate {
+                    MessageBox.Show("상대방이 게임을 나갔습니다. 메뉴로 이동합니다.");
+                    ResetGameData();
+                    ShowMenu();
+                });
+            });
+
             try {
                 await socket.ConnectAsync();
             } catch (Exception ex) {
