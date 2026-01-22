@@ -53,24 +53,28 @@ namespace Multi_Ttt_Client
                 TextAlign = ContentAlignment.MiddleCenter 
             };
 
-            Button btnLocal = new Button { Text = "로컬 멀티플레이", Dock = DockStyle.Top, Height = 60 };
-            btnLocal.Click += (s, e) => StartGame(GameMode.LocalMulti);
-
             Button btnAI = new Button { Text = "AI 대전 (싱글)", Dock = DockStyle.Top, Height = 60 };
             btnAI.Click += (s, e) => StartGame(GameMode.VsAI);
+            
+            Button btnLocal = new Button { Text = "로컬 멀티플레이", Dock = DockStyle.Top, Height = 60 };
+            btnLocal.Click += (s, e) => StartGame(GameMode.LocalMulti);
 
             Button btnServer = new Button { Text = "서버 멀티플레이", Dock = DockStyle.Top, Height = 60 };
             btnServer.Click += (s, e) => StartGame(GameMode.ServerMulti);
 
             this.Controls.Add(btnServer);
-            this.Controls.Add(btnAI);
             this.Controls.Add(btnLocal);
+            this.Controls.Add(btnAI);
             this.Controls.Add(lblTitle);
+            
         }
 
         // 게임 시작 및 모드 설정
         private async void StartGame(GameMode mode)
         {
+            // 게임 시작 전 데이터 완전 초기화
+            ResetGameData(); 
+
             currentMode = mode;
             this.Controls.Clear();
             InitializeBoard();
@@ -325,6 +329,9 @@ namespace Multi_Ttt_Client
             currentPlayer = 1;
             isGameOver = false;
             myPlayerNumber = 0;
+           
+            nextDieP1 = -1;
+            nextDieP2 = -1;
         }
     }
 }
